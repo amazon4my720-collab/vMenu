@@ -1071,6 +1071,7 @@ namespace vMenuClient.menus
             var util = new List<string>();
             var worn = new List<string>();
             var chameleon = new List<string>();
+            var chameleonColors = new List<VehicleData.VehicleColor>();
             var wheelColors = new List<string>() { "Default Alloy" };
 
             // Just quick and dirty solution to put this in a new enclosed section so that we can still use 'i' as a counter in the other code parts.
@@ -1112,10 +1113,14 @@ namespace vMenuClient.menus
 
                 if (GetSettingsBool(Setting.vmenu_using_chameleon_colours))
                 {
+                    var chameleonCount = GetSettingsInt(Setting.vmenu_chameleon_colours_count, 16);
+                    var chameleonStartId = GetSettingsInt(Setting.vmenu_chameleon_colours_start_id, 223);
+                    chameleonColors = VehicleData.GetChameleonColors(chameleonCount, chameleonStartId);
+
                     i = 0;
-                    foreach (var vc in VehicleData.ChameleonColors)
+                    foreach (var vc in chameleonColors)
                     {
-                        chameleon.Add($"{GetLabelText(vc.label)} ({i + 1}/{VehicleData.ChameleonColors.Count})");
+                        chameleon.Add($"{GetLabelText(vc.label)} ({i + 1}/{chameleonColors.Count})");
                         i++;
                     }
                 }
@@ -1205,8 +1210,8 @@ namespace vMenuClient.menus
                         {
                             if (itemIndex == 7)
                             {
-                                primaryColor = VehicleData.ChameleonColors[newIndex].id;
-                                secondaryColor = VehicleData.ChameleonColors[newIndex].id;
+                                primaryColor = chameleonColors[newIndex].id;
+                                secondaryColor = chameleonColors[newIndex].id;
 
                                 SetVehicleModKit(veh.Handle, 0);
                             }
@@ -1239,6 +1244,20 @@ namespace vMenuClient.menus
                                 break;
                             case 7:
                                 secondaryColor = VehicleData.WornColors[newIndex].id;
+                                break;
+                            case 8:
+                                if (GetSettingsBool(Setting.vmenu_using_chameleon_colours))
+                                {
+                                    // Chameleon paint applies to the whole vehicle, so selecting it here
+                                    // also sets the primary color to match, just like it does in the
+                                    // primary colors menu.
+                                    primaryColor = chameleonColors[newIndex].id;
+                                    secondaryColor = chameleonColors[newIndex].id;
+
+                                    ClearVehicleCustomPrimaryColour(veh.Handle);
+                                    veh.State.Set("vMenu:PrimaryPaintFinish", null, true);
+                                    SetVehicleModKit(veh.Handle, 0);
+                                }
                                 break;
                         }
 
@@ -1329,6 +1348,14 @@ namespace vMenuClient.menus
                     secondaryColorsMenu.AddMenuItem(metalList);
                     secondaryColorsMenu.AddMenuItem(utilList);
                     secondaryColorsMenu.AddMenuItem(wornList);
+
+                    if (GetSettingsBool(Setting.vmenu_using_chameleon_colours))
+                    {
+                        var chameleonList = new MenuListItem("Chameleon", chameleon, 0);
+
+                        secondaryColorsMenu.AddMenuItem(chameleonList);
+                    }
+
                     MenuController.AddSubmenu(secondaryColorsMenu, customColourMenuSecondary);
                     MenuController.BindMenuItem(secondaryColorsMenu, customColourMenuSecondary, customColour);
 
