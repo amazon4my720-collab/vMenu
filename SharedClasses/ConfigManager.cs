@@ -36,6 +36,8 @@ namespace vMenuShared
 
             // Vehicle Settings
             vmenu_using_chameleon_colours,
+            vmenu_chameleon_colours_count,
+            vmenu_chameleon_colours_start_id,
             vmenu_vehicle_spawn_delay,
             vmenu_delete_vehicle_distance,
 
