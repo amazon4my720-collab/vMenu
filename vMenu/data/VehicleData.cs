@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 using static CitizenFX.Core.Native.API;
 
@@ -98,6 +98,16 @@ namespace vMenuClient.data
                 else if (label == "G9_PAINT16")
                 {
                     AddTextEntry("G9_PAINT16", "Temperature");
+                }
+                // Generic chameleon colour labels, used for chameleon color ids that don't have
+                // one of the named/official labels above (see VehicleData.GetChameleonColors).
+                else if (label.StartsWith("VMENU_CHAMELEON_"))
+                {
+                    var number = label.Substring("VMENU_CHAMELEON_".Length);
+                    if (GetLabelText(label) == "NULL")
+                    {
+                        AddTextEntry(label, $"Chameleon Color {number}");
+                    }
                 }
 
                 this.label = label;
@@ -341,6 +351,42 @@ namespace vMenuClient.data
             new VehicleColor(237, "G9_PAINT15"),
             new VehicleColor(238, "G9_PAINT16"),
         };
+
+        /// <summary>
+        /// Builds the full list of chameleon vehicle colors, based on how many chameleon colors are
+        /// streamed/provided on this server (<paramref name="count"/>), and the first color id used by
+        /// the chameleon resource (<paramref name="startId"/>).
+        /// If an id in the requested range lines up with one of the 16 named/official Rockstar chameleon
+        /// colors (ids 223-238, see <see cref="ChameleonColors"/>), that name is reused. Any other id
+        /// (for chameleon resources/mods that provide more than 16 colors, or that start at a different
+        /// id) gets a generic "Chameleon Color N" label instead.
+        /// </summary>
+        /// <param name="count">The total amount of chameleon colors to make available.</param>
+        /// <param name="startId">The vehicle color id of the first chameleon color.</param>
+        public static List<VehicleColor> GetChameleonColors(int count, int startId)
+        {
+            var colors = new List<VehicleColor>();
+            if (count < 1)
+            {
+                return colors;
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var id = startId + i;
+                var namedIndex = id - 223; // ChameleonColors[0] (G9_PAINT01) is id 223.
+
+                if (namedIndex >= 0 && namedIndex < ChameleonColors.Count)
+                {
+                    colors.Add(ChameleonColors[namedIndex]);
+                }
+                else
+                {
+                    colors.Add(new VehicleColor(id, $"VMENU_CHAMELEON_{i + 1}"));
+                }
+            }
+            return colors;
+        }
 
         public static readonly List<int[]> NeonLightColors = new()
         {
